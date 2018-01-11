@@ -27,9 +27,7 @@ compute(TriMesh::ptr mesh,
     std::cout << "Energy = " << W << std::endl;
 
     MatrixXd dFdx(9, 9);
-    MatrixXd fd_dFdx(9, 9);
     dFdx.setZero();
-    fd_dFdx.setZero();
 
     Matrix3d forces = Matrix3d::Zero();
     Matrix3d fd_forces = Matrix3d::Zero();
@@ -40,17 +38,23 @@ compute(TriMesh::ptr mesh,
     // Coerce small effectively zero values to zero.
     forces = forces.unaryExpr([](double x){return (fabs(x) < 1.e-10) ? 0.0 : x;});
     dFdx = dFdx.unaryExpr([](double x){return (fabs(x) < 1.e-10) ? 0.0 : x;});
+    fd_forces = fd_forces.unaryExpr([](double x){return (fabs(x) < 1.e-10) ? 0.0 : x;});
+    F_approx = F_approx.unaryExpr([](double x){return (fabs(x) < 1.e-10) ? 0.0 : x;});
 
     // Filter out nans and infs
-    auto forces_rel_diff = ((forces - fd_forces).array() / forces.array()) \
-        .unaryExpr([](double x) { return (std::isinf(x) || std::isnan(x)) ? 0.0 : x; });
-    double forces_max_rel_err = forces_rel_diff.abs().maxCoeff();
-    std::cout << forces_max_rel_err << std::endl;
+    // auto forces_rel_diff = ((forces - fd_forces).array() / forces.array()) \
+    //     .unaryExpr([](double x) { return (std::isinf(x) || std::isnan(x)) ? 0.0 : x; });
+    auto forces_abs_diff = (forces - fd_forces).array();
+    double forces_max_abs_err = forces_abs_diff.abs().maxCoeff();
+    std::cout << forces_max_abs_err << std::endl;
 
-    auto Fapprox_rel_diff = ((forces - F_approx).array() / forces.array()) \
-        .unaryExpr([](double x) { return (std::isinf(x) || std::isnan(x)) ? 0.0 : x; });
-    double Fapprox_max_rel_err = Fapprox_rel_diff.abs().maxCoeff();
-    std::cout << Fapprox_max_rel_err << std::endl;
+    // auto Fapprox_rel_diff = ((forces - F_approx).array() / forces.array()) \
+    //     ; //.unaryExpr([](double x) { return (std::isinf(x) || std::isnan(x)) ? 0.0 : x; });
+    // double Fapprox_max_rel_err = Fapprox_rel_diff.abs().maxCoeff();
+    // std::cout << Fapprox_max_rel_err << std::endl;
+    auto Fapprox_abs_diff = (forces - F_approx).array();
+    double Fapprox_max_abs_err = Fapprox_abs_diff.abs().maxCoeff();
+    std::cout << Fapprox_max_abs_err << std::endl;
 
     // output force magnitudes to file.
     double disp = std::max(std::max(u0.norm(), u1.norm()), u2.norm());
@@ -58,8 +62,8 @@ compute(TriMesh::ptr mesh,
     fout << forces.col(0).norm() << ",";
     fout << forces.col(1).norm() << ",";
     fout << forces.col(2).norm() << ",";
-    fout << forces_max_rel_err << ",";
-    fout << Fapprox_max_rel_err << std::endl;
+    fout << forces_max_abs_err << ",";
+    fout << Fapprox_max_abs_err << std::endl;
 
     // restore
     mesh->v = v_old;
