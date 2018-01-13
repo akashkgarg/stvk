@@ -255,7 +255,7 @@ public:
                                                          pCloth->v.row(2));
                 pCloth->v = v_old;
 
-                grad(i, j) = (fij_forward - fij_backward) / (2*dx);
+                grad(j, i) = (fij_forward - fij_backward) / (2*dx);
             }
         }
 
