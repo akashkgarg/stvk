@@ -15,6 +15,14 @@ compute(TriMesh::ptr mesh,
     mesh->v.row(1) += u1.transpose();
     mesh->v.row(2) += u2.transpose();
 
+    std::cout << "-----------------Configuration--------------------" << std::endl;
+    std::cout << mesh->v.transpose() << std::endl;
+    std::cout << "--------------------------------------------------" << std::endl;
+
+    std::cout << "-----------------Deformation----------------------" << std::endl;
+    std::cout << (mesh->v - v_old).transpose() << std::endl;
+    std::cout << "--------------------------------------------------" << std::endl;
+
     StVenantKirchoffForce force;
 
     force.precompute(mesh.get());
@@ -34,6 +42,18 @@ compute(TriMesh::ptr mesh,
     Matrix3d F_approx = Matrix3d::Zero();
 
     force.computeForces(mesh.get(), &dFdx, forces, fd_forces, F_approx);
+
+    std::cout << "-----------------Forces---------------------------" << std::endl;
+    std::cout << forces << std::endl;
+    std::cout << "--------------------------------------------------" << std::endl;
+
+    std::cout << "-----------------F approx-------------------------" << std::endl;
+    std::cout << F_approx << std::endl;
+    std::cout << "--------------------------------------------------" << std::endl;
+
+    std::cout << "-----------------F finite-diff--------------------" << std::endl;
+    std::cout << F_approx << std::endl;
+    std::cout << "--------------------------------------------------" << std::endl;
 
     // Coerce small effectively zero values to zero.
     forces = forces.unaryExpr([](double x){return (fabs(x) < 1.e-10) ? 0.0 : x;});
@@ -78,7 +98,7 @@ deform(TriMesh::ptr mesh,
 
     const double step = 0.1;
 
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < 2; ++i) {
         compute(mesh, i*step * d0, i*step * d1, i*step * d2, ofs);
     }
 
@@ -103,36 +123,36 @@ int main(void)
     TriMesh::ptr mesh = ObjFile::read("tri.obj");
     // 0.
     //deform(mesh, Vec3d::Zero(), Vec3d::Zero(), Vec3d::Zero(), "0.csv");
-    //deform(mesh, Vec3d(0, 1, 0), Vec3d(0, 1, 0), Vec3d(0, 1, 0), "0.csv");
+    // deform(mesh, Vec3d(0, 1, 0), Vec3d(0, 1, 0), Vec3d(0, 1, 0), "0.csv");
 
-    // 1.
-    deform(mesh, Vec3d(0, 1, 0), Vec3d::Zero(), Vec3d::Zero(), "1.csv");
+    // // 1.
+    // deform(mesh, Vec3d(0, 1, 0), Vec3d::Zero(), Vec3d::Zero(), "1.csv");
 
-    // 2.
-    //deform(mesh, Vec3d(0, -1, 0), Vec3d::Zero(), Vec3d::Zero(), "2.csv");
+    // // 2.
+    // deform(mesh, Vec3d(0, -1, 0), Vec3d::Zero(), Vec3d::Zero(), "2.csv");
 
-    // 3. 
-    //deform(mesh, Vec3d::Zero(), Vec3d(1, 0, 0), Vec3d::Zero(), "3.csv");
+    // // 3. 
+    // deform(mesh, Vec3d::Zero(), Vec3d(1, 0, 0), Vec3d::Zero(), "3.csv");
 
-    // 4. 
-    //deform(mesh, Vec3d::Zero(), Vec3d(-1, 0, 0), Vec3d::Zero(), "4.csv");
+    // // 4. 
+    // deform(mesh, Vec3d::Zero(), Vec3d(-1, 0, 0), Vec3d::Zero(), "4.csv");
 
-    //make_equilateral(mesh);
+    make_equilateral(mesh);
 
     // 5.
-    //deform(mesh, Vec3d(0, -1, 0).normalized(), Vec3d::Zero(), Vec3d::Zero(), "5.csv");
+    deform(mesh, Vec3d(0, 1, 0).normalized(), Vec3d::Zero(), Vec3d::Zero(), "5.csv");
 
-    // 6.
-    //deform(mesh, Vec3d(0, 1, 0).normalized(), Vec3d::Zero(), Vec3d::Zero(), "6.csv");
+    // // 6.
+    // deform(mesh, Vec3d(0, 1, 0).normalized(), Vec3d::Zero(), Vec3d::Zero(), "6.csv");
 
     // 7.
-    //deform(mesh,
+    // deform(mesh,
     //       (-mesh->v.row(0)).normalized(),
     //       (-mesh->v.row(1)).normalized(),
     //       (-mesh->v.row(2)).normalized(), "7.csv");
     
-    // 8.
-    //deform(mesh,
+    // // 8.
+    // deform(mesh,
     //       (mesh->v.row(0)).normalized(),
     //       (mesh->v.row(1)).normalized(),
     //       (mesh->v.row(2)).normalized(), "8.csv");

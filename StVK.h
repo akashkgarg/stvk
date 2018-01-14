@@ -241,7 +241,7 @@ public:
 
                 // fij_forward
                 pCloth->v(i,j) += dx;
-                auto fij_forward = computeElementEnergy(0,
+                double fij_forward = computeElementEnergy(0,
                                                         pCloth->v.row(0),
                                                         pCloth->v.row(1),
                                                         pCloth->v.row(2));
@@ -249,7 +249,7 @@ public:
 
                 // fij_backward
                 pCloth->v(i,j) -= dx;
-                auto fij_backward = computeElementEnergy(0,
+                double fij_backward = computeElementEnergy(0,
                                                          pCloth->v.row(0),
                                                          pCloth->v.row(1),
                                                          pCloth->v.row(2));
@@ -280,13 +280,13 @@ public:
                     // x_jk + dx
                     pCloth->v(j, k) += dx;
                     gradEnergy(pCloth, grad);
-                    auto fi_forward = grad.col(i);
+                    Vec3d fi_forward = grad.col(i);
                     pCloth->v = v_old;
 
                     // x_jk - dx
                     pCloth->v(j, k) -= dx;
                     gradEnergy(pCloth, grad);
-                    auto fi_backward = grad.col(i);
+                    Vec3d fi_backward = grad.col(i);
                     pCloth->v = v_old;
 
                     H->block<3, 1>(i*3, j*3 + k) = (fi_forward - fi_backward) / (2*dx);
@@ -309,7 +309,7 @@ public:
         std::array<Eigen::Vector3d, 3> x;
         for (int j = 0; j < 3; j++) {
             //x[j] << f->v(j)->m_pPos->x(), f->v(j)->m_pPos->y(), f->v(j)->m_pPos->z();
-            auto pos = pCloth->v.row(f[j]);
+            Vec3d pos = pCloth->v.row(f[j]);
             x[j] << pos[0], pos[1], pos[2];
         }
 
@@ -371,10 +371,13 @@ public:
         fd_forces *= -1;
 
         // Compute hessian
-        //hessianFD(pCloth, dFdx);
-        hessianAnalytical(pCloth, dFdx);
+        hessianFD(pCloth, dFdx);
+        //hessianAnalytical(pCloth, dFdx);
         // negate the hessian, since jacobian = -\grad^2 E
         dFdx->operator*=(-1);
+        std::cout << "----------------Hessian---------------------------" << std::endl;
+        std::cout << *dFdx << std::endl;
+        std::cout << "--------------------------------------------------" << std::endl;
 
         // Validate hessian using F(x) = F(x + dx) - dF. dF = dFdx * dx
         const double eps = 1.e-6;
