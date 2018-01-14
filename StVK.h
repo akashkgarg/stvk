@@ -372,12 +372,16 @@ public:
 
         // Compute hessian
         hessianFD(pCloth, dFdx);
-        //hessianAnalytical(pCloth, dFdx);
         // negate the hessian, since jacobian = -\grad^2 E
         dFdx->operator*=(-1);
-        std::cout << "----------------Hessian---------------------------" << std::endl;
+        std::cout << "----------------Hessian FD------------------------" << std::endl;
         std::cout << *dFdx << std::endl;
         std::cout << "--------------------------------------------------" << std::endl;
+        hessianAnalytical(pCloth, dFdx);
+        std::cout << "----------------Hessian Analytical----------------" << std::endl;
+        std::cout << *dFdx << std::endl;
+        std::cout << "--------------------------------------------------" << std::endl;
+        dFdx->operator*=(-1);
 
         // Validate hessian using F(x) = F(x + dx) - dF. dF = dFdx * dx
         const double eps = 1.e-6;
