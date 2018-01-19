@@ -81,7 +81,7 @@ public:
 			// Store as a 3x2 matrix for each vertex and each coordinate
 			for (int j = 0; j < 3; j++)
 				for (int k = 0; k < 3; k++)
-					m_elements[i].dFdu[j][k] = dFdu.block<2, 3>(2 * j, 3 * k).transpose();
+					m_elements[i].dFdu[j][k] = dFdu.block<2, 3>(2 * k, 3 * j).transpose();
 		}
 	}
 
@@ -300,6 +300,8 @@ public:
 
     void hessianAnalytical(CClothModel *pCloth, CSparseMat *dFdx)
     {
+        dFdx->setZero();
+
         // ONLY A SINGLE ELEMENT
         int i = 0;
 
@@ -336,7 +338,7 @@ public:
             else
                 Bm_j = m_elements[i].DmInverse.row(j-1).transpose();
 
-            for (int k = j; k < 3; k++)
+            for (int k = 0; k < 3; k++)
             {
                 // Each column of 3x3 stiffness matrix is derivative of force f_j w.r.t. vertex k's l'th coordinate
                 Eigen::Matrix3d K_jk;
@@ -347,11 +349,11 @@ public:
                     K_jk.col(l) = (dFdu * S + _mu * F * (F.transpose() * dFdu + dFdu.transpose() * F)) * Bm_j * m_elements[i].A;
                 }
 
-                Matrix3x3 K;
-                K = K_jk;
+                //Matrix3x3 K;
+                //K = K_jk;
                 //K.SetCol(CVector3d(K_jk.col(0).data()), CVector3d(K_jk.col(1).data()), CVector3d(K_jk.col(2).data()));
                 //dFdx->AddBlockMatrix(f->v(j)->GetIndex(), f->v(k)->GetIndex(), K);
-                dFdx->block(f[j], f[k], 3, 3) = K;
+                dFdx->block<3,3>(f[j]*3, f[k]*3) += K_jk;
             }
         }
     }
@@ -378,10 +380,10 @@ public:
         std::cout << *dFdx << std::endl;
         std::cout << "--------------------------------------------------" << std::endl;
         hessianAnalytical(pCloth, dFdx);
+        dFdx->operator*=(-1);
         std::cout << "----------------Hessian Analytical----------------" << std::endl;
         std::cout << *dFdx << std::endl;
         std::cout << "--------------------------------------------------" << std::endl;
-        dFdx->operator*=(-1);
 
         // Validate hessian using F(x) = F(x + dx) - dF. dF = dFdx * dx
         const double eps = 1.e-6;
@@ -486,7 +488,7 @@ public:
 				else
 					Bm_j = m_elements[i].DmInverse.row(j-1).transpose();
 
-				for (int k = j; k < 3; k++)
+				for (int k = 0; k < 3; k++)
 				{
 					// Each column of 3x3 stiffness matrix is derivative of force f_j w.r.t. vertex k's l'th coordinate
 					Eigen::Matrix3d K_jk;
@@ -496,12 +498,11 @@ public:
 						Matrix3x2d& dFdu = m_elements[i].dFdu[k][l];
 						K_jk.col(l) = (dFdu * S + _mu * F * (F.transpose() * dFdu + dFdu.transpose() * F)) * Bm_j * m_elements[i].A;
 					}
-
-					Matrix3x3 K;
-                    K = K_jk;
+					//Matrix3x3 K;
+                    //K = K_jk;
 					//K.SetCol(CVector3d(K_jk.col(0).data()), CVector3d(K_jk.col(1).data()), CVector3d(K_jk.col(2).data()));
 					//dFdx->AddBlockMatrix(f->v(j)->GetIndex(), f->v(k)->GetIndex(), K);
-                    dFdx->block(f[j], f[k], 3, 3) = K;
+                    dFdx->block(f[j], f[k], 3, 3) += K_jk;
 				}
 			}
 		}
