@@ -326,7 +326,8 @@ public:
         // 1st Piola stress tensor, S = k * E, where E = 0.5 * (F^T F - I) (Green-Lagrange strain)
         // Remove negative eigenvalues so that it can always recover triangle shape and is always P.D.
         Eigen::Matrix2d S = _mu * (F.transpose() * F - Eigen::Matrix2d::Identity());
-        //S = clampMatrixEigenvalues(S);
+        //S = S.unaryExpr([](double x) { return std::max(x, 0.0); });
+        S = clampMatrixEigenvalues(S);
 
         // Take derivative of each force f_j with respect to each vertex k
         for (int j = 0; j < 3; j++)
@@ -353,7 +354,7 @@ public:
                 //K = K_jk;
                 //K.SetCol(CVector3d(K_jk.col(0).data()), CVector3d(K_jk.col(1).data()), CVector3d(K_jk.col(2).data()));
                 //dFdx->AddBlockMatrix(f->v(j)->GetIndex(), f->v(k)->GetIndex(), K);
-                dFdx->block<3,3>(f[j]*3, f[k]*3) += K_jk;
+                dFdx->block<3,3>(f[j]*3, f[k]*3) -= K_jk;
             }
         }
     }
@@ -380,7 +381,8 @@ public:
         std::cout << *dFdx << std::endl;
         std::cout << "--------------------------------------------------" << std::endl;
         hessianAnalytical(pCloth, dFdx);
-        dFdx->operator*=(-1);
+        printEigenValues(*dFdx);
+        //dFdx->operator*=(-1);
         std::cout << "----------------Hessian Analytical----------------" << std::endl;
         std::cout << *dFdx << std::endl;
         std::cout << "--------------------------------------------------" << std::endl;
@@ -508,6 +510,13 @@ public:
 		}
 	}
  #endif
+
+    void printEigenValues(Eigen::MatrixXd &input)
+    {
+		Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> ev(input);	
+		assert(ev.info() == Eigen::Success);
+        std::cout << "Eigenvalues: " << ev.eigenvalues().transpose() << std::endl;
+    }
 
 	Eigen::Matrix2d clampMatrixEigenvalues(Eigen::Matrix2d& input)
 	{
