@@ -115,8 +115,40 @@ make_equilateral(TriMesh::ptr mesh)
     mesh->vt.row(2) = Vec2d(sqrt(3)/2.0, -0.5);
 }
 
+void
+tensor_contraction()
+{
+    // https://en.wikipedia.org/wiki/Hooke%27s_law#General_tensor_form
+
+    // strain
+    Eigen::Matrix2d e;
+    e << 1, 2, 3, 4;
+
+    double Ex  = 10;
+    double Gxy = 100, Gyx = 100;
+    double Ey  = 1000;
+    double Vxy = 0, Vyx = 0; // poisson ratio
+
+    std::cout << Eigen::Map<Eigen::Matrix<double, 4, 1> >(e.data()) << std::endl;
+
+    // stiffness tensor
+    Eigen::Matrix<double, 4, 4> c;
+    c << Ex, 0, 0, Vyx*Ex,
+        0, Gyx*(1. - Vxy*Vyx), 0, 0,
+        0, 0, Gxy*(1. - Vxy*Vyx), 0,
+        Vxy*Ey, 0, 0, Ey;
+
+    Eigen::Matrix<double, 4, 1> s_flat = (1. / (1. - Vxy*Vyx)) * c * Eigen::Map<Eigen::Matrix<double, 4, 1> >(e.data());
+    Eigen::Matrix2d s = Eigen::Map<Eigen::Matrix2d>(s_flat.data());
+
+    std::cout << "S = \n" << s << std::endl;
+}
+
 int main(void)
 {
+    tensor_contraction();
+    return 0;
+
     TriMesh::ptr mesh = ObjFile::read("tri.obj");
     // 0.
     // deform(mesh, Vec3d::Zero(), Vec3d::Zero(), Vec3d::Zero(), "0.csv");
